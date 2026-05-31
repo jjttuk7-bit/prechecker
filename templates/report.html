@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #202124; line-height: 1.55; }
+    h1, h2 { color: #17202a; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0 24px; }
+    th, td { border: 1px solid #d7dde5; padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f2f5f8; }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 6px; background: #eef3f8; }
+    .evidence-category { font-weight: 700; color: #38536b; }
+    .notice { margin-top: 28px; padding: 14px; background: #fff8e6; border: 1px solid #f0d58a; }
+  </style>
+</head>
+<body>
+  <h1>상표 프리체크 예비 리포트</h1>
+  <p><strong>한 줄 결론:</strong> {{ one_line }}</p>
+
+  <h2>입력 정보</h2>
+  <p><strong>브랜드명:</strong> {{ brand_name }}</p>
+  <p><strong>사용 예정 분야:</strong> {{ business_description }}</p>
+  <p><strong>예상 상품류/서비스류:</strong> {{ likely_classes | join(", ") }}</p>
+
+  <h2>검색 확장어</h2>
+  <p>{{ variants.recommended_search_terms | join(", ") }}</p>
+
+  <h2>유사 상표 후보 TOP 10</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>상표명</th><th>상태</th><th>상품류</th><th>지정상품</th><th>종합점수</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in candidates %}
+      <tr>
+        <td>{{ item.trademark_name }}</td>
+        <td>{{ item.status }}</td>
+        <td>{{ item.nice_classes | join(", ") }}</td>
+        <td>{{ item.designated_goods | join(", ") }}</td>
+        <td>{{ "%.3f"|format(item.total_score) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>위험 후보 TOP 3</h2>
+  {% for item in risk.top_candidates %}
+    <p><span class="badge">{{ loop.index }}</span> <strong>{{ item.trademark_name }}</strong>
+    / 예비 위험도 {{ item.risk_level }} / {{ item.risk_reason }}</p>
+  {% else %}
+    <p>표시할 후보가 없습니다. 단, 검색 조건과 API 응답을 추가 확인하는 것이 좋습니다.</p>
+  {% endfor %}
+
+  <h2>예비 위험도</h2>
+  <p><strong>{{ risk.overall_risk_label }}</strong> - {{ risk.summary }}</p>
+
+  <h2>근거 지식</h2>
+  {% for category in ["상품류 근거", "상태값 근거", "유사 판단 근거"] %}
+    {% set items = evidence_by_category.get(category, []) %}
+    {% if items %}
+      <h3>{{ category }}</h3>
+      <ul>
+        {% for item in items %}
+          <li><strong>{{ item.title }}</strong>: {{ item.text }} <small>({{ item.source }})</small></li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% else %}
+    <p>검색 결과와 연결된 로컬 근거 지식이 없습니다.</p>
+  {% endfor %}
+
+  <h2>대체 이름 후보</h2>
+  <p>{{ alternatives | join(", ") }}</p>
+
+  <h2>다음 행동</h2>
+  <ul>
+    <li>KIPRIS에서 동일·유사 표장을 직접 추가 확인합니다.</li>
+    <li>겹치는 상품류와 지정상품을 중심으로 전문가 검토를 권장합니다.</li>
+    <li>출원 전에는 실제 사용 분야와 지정상품 문구를 더 구체화합니다.</li>
+  </ul>
+
+  <div class="notice">{{ disclaimer }}</div>
+</body>
+</html>

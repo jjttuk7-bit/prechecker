@@ -1,0 +1,11 @@
+streamlit
+openai
+python-dotenv
+requests
+pandas
+rapidfuzz
+jinja2
+beautifulsoup4
+lxml
+pytest
+starlette>=0.50.0
