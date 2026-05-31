@@ -32,3 +32,19 @@ def test_parse_kipris_response_accepts_json_and_xml():
 
     assert json_items == [{"title": "A"}]
     assert xml_items == [{"title": "B"}]
+
+
+def test_normalize_items_supports_kipris_designation_goods_hangeul_name():
+    raw_items = [
+        {
+            "Title": "카페브레리",
+            "ApplicationStatus": "등록",
+            "ClassificationCode": "43",
+            "DesignationGoodsHangeulName": "카페업; 음식점업",
+        }
+    ]
+
+    normalized = normalize_items(raw_items)
+
+    assert normalized[0]["nice_classes"] == ["43"]
+    assert normalized[0]["designated_goods"] == ["카페업", "음식점업"]

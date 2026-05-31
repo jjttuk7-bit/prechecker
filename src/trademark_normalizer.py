@@ -10,7 +10,20 @@ FIELD_ALIASES = {
     "registration_number": ["registrationNumber", "regNo", "registration_no"],
     "status": ["applicationStatus", "status", "regStatus", "rightStatus", "finalStatus"],
     "nice_classes": ["classificationCode", "niceClass", "nice_classes", "classNo", "goodsClass"],
-    "designated_goods": ["designatedGoods", "goods", "productName", "goodsName", "serviceList"],
+    "designated_goods": [
+        "designatedGoods",
+        "designationGoods",
+        "designatedGood",
+        "DesignationGoodsHangeulName",
+        "designationGoodsHangeulName",
+        "designationGoodsName",
+        "goods",
+        "goodsName",
+        "goodsNameKor",
+        "productName",
+        "productNameHangul",
+        "serviceList",
+    ],
     "applicant": ["applicantName", "applicant", "ownerName", "rightHolder"],
     "application_date": ["applicationDate", "appDate", "filingDate"],
     "registration_date": ["registrationDate", "regDate"],
@@ -33,7 +46,16 @@ def _as_list(value: Any) -> list[str]:
     if value is None:
         return []
     if isinstance(value, list):
-        parts = value
+        parts = []
+        for item in value:
+            if isinstance(item, dict):
+                nested = _get_any(item, FIELD_ALIASES["designated_goods"])
+                parts.extend(_as_list(nested) if nested else [])
+            else:
+                parts.append(item)
+    elif isinstance(value, dict):
+        nested = _get_any(value, FIELD_ALIASES["designated_goods"])
+        parts = _as_list(nested) if nested else list(value.values())
     else:
         parts = re.split(r"[,;/|·\n]+", str(value))
     return [str(part).strip() for part in parts if str(part).strip()]

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 import os
 from urllib.parse import parse_qsl
@@ -40,17 +40,17 @@ def parse_extra_params(raw: str) -> dict[str, str]:
 
 @dataclass(frozen=True)
 class Settings:
-    openai_api_key: str = _secret_value("OPENAI_API_KEY")
-    openai_model: str = _secret_value("OPENAI_MODEL", "gpt-4.1-mini")
-    kipris_api_key: str = _secret_value("KIPRIS_API_KEY")
-    kipris_endpoint: str = _secret_value("KIPRIS_TRADEMARK_ENDPOINT")
-    kipris_key_param: str = _secret_value("KIPRIS_KEY_PARAM", "ServiceKey")
-    kipris_search_param: str = _secret_value("KIPRIS_SEARCH_PARAM", "searchString")
-    kipris_page_param: str = _secret_value("KIPRIS_PAGE_PARAM", "pageNo")
-    kipris_rows_param: str = _secret_value("KIPRIS_ROWS_PARAM", "numOfRows")
+    openai_api_key: str = field(default_factory=lambda: _secret_value("OPENAI_API_KEY"))
+    openai_model: str = field(default_factory=lambda: _secret_value("OPENAI_MODEL", "gpt-4.1-mini"))
+    kipris_api_key: str = field(default_factory=lambda: _secret_value("KIPRIS_API_KEY"))
+    kipris_endpoint: str = field(default_factory=lambda: _secret_value("KIPRIS_TRADEMARK_ENDPOINT"))
+    kipris_key_param: str = field(default_factory=lambda: _secret_value("KIPRIS_KEY_PARAM", "ServiceKey"))
+    kipris_search_param: str = field(default_factory=lambda: _secret_value("KIPRIS_SEARCH_PARAM", "searchString"))
+    kipris_page_param: str = field(default_factory=lambda: _secret_value("KIPRIS_PAGE_PARAM", "pageNo"))
+    kipris_rows_param: str = field(default_factory=lambda: _secret_value("KIPRIS_ROWS_PARAM", "numOfRows"))
     kipris_extra_params: dict[str, str] | None = None
-    app_env: str = _secret_value("APP_ENV", "local")
-    save_raw_responses: bool = _secret_bool("SAVE_RAW_RESPONSES", True)
+    app_env: str = field(default_factory=lambda: _secret_value("APP_ENV", "local"))
+    save_raw_responses: bool = field(default_factory=lambda: _secret_bool("SAVE_RAW_RESPONSES", True))
 
     def __post_init__(self) -> None:
         if self.kipris_extra_params is None:

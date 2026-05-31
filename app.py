@@ -4,6 +4,7 @@ import pandas as pd
 import streamlit as st
 
 from src.pipeline import run_precheck
+from src.config import get_settings
 from src.rag_retriever import group_evidence_by_category, related_evidence_for_candidate, retrieve_evidence
 from src.storage import save_report_html
 
@@ -22,12 +23,13 @@ def render_chips(items: list[str], css_class: str = "chip") -> None:
 def candidate_table_rows(candidates: list[dict]) -> list[dict]:
     rows = []
     for item in candidates:
+        designated_goods = item.get("designated_goods", [])
         rows.append(
             {
                 "상표명": item.get("trademark_name"),
                 "상태": item.get("status"),
                 "상품류": ", ".join(item.get("nice_classes", [])),
-                "지정상품": ", ".join(item.get("designated_goods", [])[:3]),
+                "지정상품": ", ".join(designated_goods[:3]) if designated_goods else "상세 조회 필요",
                 "이름 유사도": item.get("name_similarity"),
                 "상품류 겹침": item.get("class_similarity"),
                 "상태 위험도": item.get("status_risk"),
@@ -190,7 +192,13 @@ st.markdown(
 with st.sidebar:
     st.header("설정")
     mock_mode = st.toggle("Mock mode", value=True)
-    st.caption("API 키 또는 KIPRIS endpoint가 없어도 전체 흐름을 확인할 수 있습니다.")
+    settings = get_settings()
+    if mock_mode:
+        st.info("Mock mode: 모의 데이터로 분석합니다.")
+    elif settings.kipris_endpoint and settings.kipris_api_key:
+        st.success("실 KIPRIS API 사용 중")
+    else:
+        st.warning("실 API 설정이 부족합니다.")
 
 brand_name = st.text_input("브랜드명", placeholder="예: 먼저체크")
 business_description = st.text_area("사용 분야", placeholder="예: AI 기반 상표 검색 웹서비스", height=120)
