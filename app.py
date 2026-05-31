@@ -200,14 +200,24 @@ with st.sidebar:
     else:
         st.warning("실 API 설정이 부족합니다.")
 
-brand_name = st.text_input("브랜드명", placeholder="예: 먼저체크")
-business_description = st.text_area("사용 분야", placeholder="예: AI 기반 상표 검색 웹서비스", height=120)
+brand_name = st.text_input("브랜드명", placeholder="예: 라이트브루, 소소마켓, 그린픽, 모닝스테이, 루나핏")
+business_description = st.text_area(
+    "사용 분야",
+    placeholder="예: 카페업, 화장품 판매업, 의류 브랜드, 온라인 쇼핑몰, 교육 콘텐츠 서비스, 모바일 앱 서비스",
+    height=120,
+)
 
-if st.button("상표 프리체크 실행", type="primary", disabled=not brand_name or not business_description):
+if st.button("상표 프리체크 실행", type="primary"):
+    if not brand_name.strip() or not business_description.strip():
+        st.warning("브랜드명과 사용 분야를 모두 입력한 뒤 실행해 주세요.")
+        st.stop()
+
     with st.spinner("검색 변형어 생성, KIPRIS 조회, 위험도 분석을 진행 중입니다."):
-        result = run_precheck(brand_name, business_description, mock_mode=mock_mode)
-        report_path = save_report_html(brand_name, result["report_html"])
-        evidence = evidence_items(result, business_description)
+        clean_brand_name = brand_name.strip()
+        clean_business_description = business_description.strip()
+        result = run_precheck(clean_brand_name, clean_business_description, mock_mode=mock_mode)
+        report_path = save_report_html(clean_brand_name, result["report_html"])
+        evidence = evidence_items(result, clean_business_description)
 
     risk_label = result["risk"]["overall_risk_label"]
     st.markdown(
@@ -299,7 +309,7 @@ if st.button("상표 프리체크 실행", type="primary", disabled=not brand_na
         st.download_button(
             "HTML 리포트 다운로드",
             data=result["report_html"],
-            file_name=f"{brand_name}_precheck_report.html",
+            file_name=f"{clean_brand_name}_precheck_report.html",
             mime="text/html",
         )
         st.caption(f"저장 위치: {report_path}")
