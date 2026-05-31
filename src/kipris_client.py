@@ -119,6 +119,7 @@ def search_trademark(keyword: str, page: int = 1, rows: int = 20, mock_mode: boo
         settings.kipris_page_param: page,
         settings.kipris_rows_param: rows,
     }
+    params.update(settings.kipris_extra_params or {})
     try:
         response = requests.get(settings.kipris_endpoint, params=params, timeout=20)
         response.raise_for_status()

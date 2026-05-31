@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 import os
+from urllib.parse import parse_qsl
 
 from dotenv import load_dotenv
 
@@ -13,18 +14,51 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def _secret_value(name: str, default: str = "") -> str:
+    env_value = os.getenv(name)
+    if env_value not in (None, ""):
+        return env_value
+    try:
+        import streamlit as st
+
+        value = st.secrets.get(name, default)
+        return str(value) if value not in (None, "") else default
+    except Exception:
+        return default
+
+
+def _secret_bool(name: str, default: bool = False) -> bool:
+    value = _secret_value(name, str(default).lower())
+    return value.lower() in {"1", "true", "yes", "y", "on"}
+
+
+def parse_extra_params(raw: str) -> dict[str, str]:
+    if not raw:
+        return {}
+    return {key: value for key, value in parse_qsl(raw, keep_blank_values=True)}
+
+
 @dataclass(frozen=True)
 class Settings:
-    openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
-    openai_model: str = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
-    kipris_api_key: str = os.getenv("KIPRIS_API_KEY", "")
-    kipris_endpoint: str = os.getenv("KIPRIS_TRADEMARK_ENDPOINT", "")
-    kipris_key_param: str = os.getenv("KIPRIS_KEY_PARAM", "ServiceKey")
-    kipris_search_param: str = os.getenv("KIPRIS_SEARCH_PARAM", "searchString")
-    kipris_page_param: str = os.getenv("KIPRIS_PAGE_PARAM", "pageNo")
-    kipris_rows_param: str = os.getenv("KIPRIS_ROWS_PARAM", "numOfRows")
-    app_env: str = os.getenv("APP_ENV", "local")
-    save_raw_responses: bool = os.getenv("SAVE_RAW_RESPONSES", "true").lower() == "true"
+    openai_api_key: str = _secret_value("OPENAI_API_KEY")
+    openai_model: str = _secret_value("OPENAI_MODEL", "gpt-4.1-mini")
+    kipris_api_key: str = _secret_value("KIPRIS_API_KEY")
+    kipris_endpoint: str = _secret_value("KIPRIS_TRADEMARK_ENDPOINT")
+    kipris_key_param: str = _secret_value("KIPRIS_KEY_PARAM", "ServiceKey")
+    kipris_search_param: str = _secret_value("KIPRIS_SEARCH_PARAM", "searchString")
+    kipris_page_param: str = _secret_value("KIPRIS_PAGE_PARAM", "pageNo")
+    kipris_rows_param: str = _secret_value("KIPRIS_ROWS_PARAM", "numOfRows")
+    kipris_extra_params: dict[str, str] | None = None
+    app_env: str = _secret_value("APP_ENV", "local")
+    save_raw_responses: bool = _secret_bool("SAVE_RAW_RESPONSES", True)
+
+    def __post_init__(self) -> None:
+        if self.kipris_extra_params is None:
+            object.__setattr__(
+                self,
+                "kipris_extra_params",
+                parse_extra_params(_secret_value("KIPRIS_EXTRA_PARAMS", "")),
+            )
 
 
 def get_settings() -> Settings:
